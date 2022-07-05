@@ -1,0 +1,360 @@
+---
+title: "Pregnancy exposure to phenols and anthropometric measures in gestation and at birth"
+subtitle: "Main analyses"
+author: "Paulina Jedynak, Matthieu Rolland, Isabelle Pin, Cathrine Thomsen, Amrit K. Sakhi, Azemira Sabaredzovic, Claire Philippat, Rémy Slama, and the SEPAGES study group"
+date: "2022"
+output:
+  html_document:
+    df_print: paged
+biblio-style: apsr
+fontfamily: mathpazo
+fontsize: 11pt
+geometry: margin = 1in
+keywords: Cohort; phenol exposure; bisphenol; triclosan; pooled biospecimens; gestational growth; birth outcomes
+bibliography: lib.bib
+abstract: "Background: Some synthetic phenols alter pathways involved in fetal development. Despite their high within-subject temporal variability, earlier studies relied on spot urine samples to assess pregnancy exposure. In this study, we examined associations between prenatal phenol exposure and fetal growth. Methods: We measured concentrations of two bisphenols, four parabens, benzophenone-3, and triclosan in 478 pregnant women in two weekly pools of 21 samples each, collected at 18 and 34 gestational weeks. We used adjusted linear regressions to study associations between phenol concentrations and growth outcomes assessed twice during pregnancy and at birth. Results: Benzophenone-3 was positively associated with all ultrasound growth parameters in at least one time point, in males but not females. In females, butylparaben was negatively associated with third trimester abdominal circumference and weight at birth. We observed isolated associations for triclosan (negative) and for methylparaben and bisphenol S (positive) and late pregnancy fetal growth. Conclusions: Our results suggest associations between prenatal exposure to phenols and fetal growth. Benzophenone-3 was the exposure most consistently (positively) associated across all growth parameters."
+
+---
+
+
+## **General setup**
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r path setup}
+# Create a path to save output files
+path_main <- "results/phenols" # main analyses of the paper
+```
+
+
+## **Load packages and functions**
+
+```{r, message = FALSE}
+# Load packages
+library("tidyverse")
+source("R/UsoundDataCreation.R")
+source("R/DataPreparation.R")
+source("R/DescriptiveAnalysis.R")
+source("R/Figures.R")
+source("R/StatModels.R")
+```
+
+
+## **Load datasets**
+
+```{r, message = FALSE}
+# Load datasets
+# Information on the anthropometric measures
+bdd_grossesse <- haven::read_stata(here::here("data/raw_data/bdd_grossesse_v4_1.dta")) # replaced the old database bdd_grossesse_v4.dta with a new version provided by Karine Supernant
+
+samples <- readr::read_csv(here::here("data/raw_data/phenols_phthalates_pregnancy_mr_2020-03-26_448.csv")) # sent by Claire Philippat 26/02/2021 by email
+
+tobacco <- haven::read_stata(here::here("data/raw_data/tobaccopregnancy_ag_20201218_16_copy.dta")) %>% 
+  dplyr::mutate(ident = as.character(ident)) # produced by Ariane Guilbert in December 2020 and sent by her by email 22/02/2021
+
+ultrasound_manual <- haven::read_stata(here::here("data/raw_data/donnees_echo_saisies_quest_mt1caj1.dta")) # we confirmed with Sarah Lyon-Caen 25/02/2021 on Slack, that this is the final dataset
+
+limits <- readr::read_csv(here::here("data/raw_data/limits_data_2022-01-24.csv")) # sent by Matthieu Rolland
+```
+
+
+## **Prepare variable lists**
+
+Manually created lists of compounds, models variables, etc.
+
+```{r}
+# Manually create the variables names
+# Full names of exposure variables
+exposures_long <- c("Bisphenol A", "Bisphenol S", "Triclosan", "Benzophenone-3", "Butylparaben", "Ethylparaben", "Methylparaben", "Propylparaben")
+
+# Full names of continuous exposure variables
+exposures_long_nocat <- c("Bisphenol A", "Triclosan", "Benzophenone-3", "Ethylparaben", "Methylparaben", "Propylparaben")
+
+# Full names of categorical exposure variables
+exposures_long_cat <- c("Bisphenol S", "Butylparaben")
+
+# Short names of exposure variables as used in the databases
+expo_names <- c("log_BPA", "log_TCS", "log_BP3", "log_ETPA", "log_MEPA", "log_PRPA", "cat_BPS", "cat_BUPA")
+
+# Short names of exposures that do not include not standardized exposures (TCS, BUPA and BPS)
+expo_names_nosd <- c("log_BPA", "log_BP3", "log_ETPA", "log_MEPA", "log_PRPA")
+```
+
+
+## **Data preparation**
+
+```{r}
+# Extract individuals' IDs
+id_list <- samples %>% 
+  pull(ident) %>% 
+  unique() %>% 
+  sort()
+
+# * Create population characteristics data ---- 479 x 9
+pop_data <- CreatePopData(covariates_data = bdd_grossesse, 
+                          expo_data = samples)
+
+# * Create tobacco data ---- 484 x 2
+smoke_data <- CreateSmokeData(tobacco_data = tobacco)
+
+# * Create birth outcomes data ---- 1,437 x 5
+birth_data <- CreateBirthOutcomes(covariates_data = bdd_grossesse,
+                                  pop_data = pop_data)
+
+# * Create exposure data ---- 479 x 49
+expo_data <- CreateExpoData(expo_data = samples)
+
+# * Create ultrasound data ---- 4,604 x 11
+ultrasound_long <- CreateUsoundDdata(bdd_grossesse = bdd_grossesse,
+                                     ultrasound_manual_data = ultrasound_manual)
+```
+
+
+```{r}
+# * Create population, smoking and exposure dataset ---- 479 x 58
+pop_smoke_expo_miss <- pop_data %>%
+  left_join(smoke_data, by = "ident") %>% 
+  left_join(expo_data, by = "ident")
+
+# Save dataset for sensitivity analyses
+saveRDS(pop_smoke_expo_miss, here::here(path_main, "pop_smoke_expo_miss.RDS"))
+
+pop_smoke_expo <- ImputeMissingCov(data_w_missing = pop_smoke_expo_miss)
+
+# Save dataset for sensitivity analyses
+saveRDS(pop_smoke_expo, here::here(path_main, "pop_smoke_expo.RDS"))
+
+# *  Create all outcomes data ---- 4,933 x 11
+# All outcomes for patients with at least one sample and T2 and T3 (not T1)
+outcomes_long <- bind_rows(birth_data, ultrasound_long) %>%
+  filter(ident %in% id_list & trimester != "US1") %>% 
+  filter(keep_flag | trimester == "birth")
+
+# * Create model data ---- 4,933 x 68
+model_data <- outcomes_long %>%
+  left_join(pop_smoke_expo, by = "ident") %>% 
+  
+  # standardise outcome vals
+  dplyr::group_by(outcome, trimester) %>%
+  dplyr::mutate(outcome_val_sd = outcome_val / sd(outcome_val, na.rm = TRUE)) %>%
+  dplyr::ungroup()
+
+# Save the output for sensitivity analysis
+saveRDS(model_data, here::here(path_main, "model_data.RDS"))
+```
+
+
+```{r}
+# Define continues exposure variables to be transformed to long format ---- n = 28
+cols_to_long_cont <- ColsToLong(x = expo_names[!str_detect(expo_names, "cat")],
+                                y = expo_names_nosd[!str_detect(expo_names_nosd, "cat")])
+
+# Define continues exposure variables to be transformed to long format ---- n = 6
+cols_to_long_cat <- ColsToLong(x = expo_names[str_detect(expo_names, "cat")])
+
+# Create dataset in a long format for continues exposure variables ---- 138,124 x 18
+model_data_long_cont <- ModelDataAllVarsLong(model_data = model_data,
+                                             cols_to_long = cols_to_long_cont)
+
+# Save the output for sensitivity analysis
+saveRDS(model_data_long_cont, here::here(path_main, "model_data_long_cont.RDS"))
+
+# Create dataset in a long format for categorical exposure variables ---- 29,598 x 18
+model_data_long_cat <- ModelDataAllVarsLong(model_data = model_data,
+                                            cols_to_long = cols_to_long_cat)
+
+# Remove non-standardized exposures, T2&T3 averaged exposure predicting T2, and T2 exposure predicting T3 and birth
+model_data_long_main_cont <- RemoveConditions(model_data_long_cont) # 29,598 x 18
+model_data_long_main_cat <- RemoveConditions(model_data_long_cat) # 9,866 x 18
+
+# Save the outputs for sensitivity analysis
+saveRDS(model_data_long_main_cont, here::here(path_main, "model_data_long_main_cont.RDS"))
+saveRDS(model_data_long_main_cat, here::here(path_main, "model_data_long_main_cat.RDS"))
+```
+
+
+## **Population characteristics**
+
+```{r population characteristics, warning = FALSE}
+# Print population characteristics
+(pop_char <- PopulationCharacteristics(
+  cov_expo_data = pop_smoke_expo_miss,
+  path = path_main,
+  file_name = "population_characteristics"))
+```
+
+
+
+## **Exposure descriptive statistics**
+
+```{r exposure characteristics, message = FALSE}
+# Exposure descriptive statistics for non standardized exposures
+(exp_desc <- ExposureCharacteristics(expo_data = samples,
+                                     limits = limits))
+```
+
+```{r}
+# Print the detection rates per exposure per trimester
+dplyr::select(exp_desc, compound, dplyr::contains("pct_")) %>% 
+  tidyr::pivot_longer(cols = -compound,
+                      names_to = "pct",
+                      values_to = "pct_val") %>% 
+  dplyr::mutate(pct_val = round(pct_val)) %>% 
+  dplyr::arrange(pct_val) # The detection rate for BUPA: 24%, BPS: 25%, rest: 81%.
+```
+
+
+## **Main statistical analyses**
+
+### Main models
+
+```{r}
+# Run linear regressions for continuous exposures
+model_output_cont <- ComputeGrowthModels(model_data_long = model_data_long_main_cont) # 66 tests x 12
+
+model_tab_cont <- sapply(X = exposures_long_nocat, 
+                         FUN = PrintTab, 
+                         model_output = model_output_cont, 
+                         simplify = FALSE, 
+                         USE.NAMES = TRUE)
+
+# Tidy the results
+res_cont <- purrr::map_df(model_tab_cont, ~as.data.frame(.x), .id = "exposure") %>% 
+  dplyr::mutate(term = factor(term, 
+                              levels = "exp_val", 
+                              labels = "Continuous"))
+```
+
+
+```{r}
+# Run linear regressions for categorical exposures
+model_output_cat <- ComputeGrowthModels(model_data_long = model_data_long_main_cat, 
+                                        cat = TRUE) # 44 tests x 12
+
+model_tab_cat <- sapply(X = exposures_long_cat, 
+                        FUN = PrintTab, 
+                        model_output = model_output_cat, 
+                        cat = TRUE, 
+                        simplify = FALSE, 
+                        USE.NAMES = TRUE)
+
+# Tidy the results
+res_cat <- purrr::map_df(model_tab_cat, ~as.data.frame(.x), .id = "exposure") %>%
+  dplyr::mutate(term = substring(term, 8),
+                term = factor(term, levels = c("LOD-LOQ", ">LOQ"))) %>%
+  dplyr::arrange(exposure, tri_out, term)
+
+# Merge the results for continuous and categorical exposures
+res_combined <- dplyr::bind_rows(res_cont, res_cat)
+saveRDS(res_combined, here::here(path_main, "res_combined.RDS"))
+```
+
+
+### Sex-specific associations
+
+```{r}
+# Run linear regressions for continuous exposures including interaction term between exposure and child sex
+model_output_inter_cont <- ComputeGrowthModels(model_data_long = model_data_long_main_cont, sex = TRUE)
+
+model_tab_inter_cont <- sapply(X = exposures_long_nocat, FUN = PrintTab, model_output = model_output_inter_cont, sex = TRUE, simplify = FALSE, USE.NAMES = TRUE)
+
+# Tidy the results
+res_inter_cont <- purrr::map_df(model_tab_inter_cont, ~as.data.frame(.x), .id = "exposure")
+```
+
+```{r}
+# Run linear regressions for acegorical exposures including interaction term between exposure and child sex
+model_output_inter_cat <- ComputeGrowthModels(model_data_long = model_data_long_main_cat, cat = TRUE, sex = TRUE)
+
+model_tab_inter_cat <- sapply(X = exposures_long_cat, FUN = PrintTab, model_output = model_output_inter_cat, cat = TRUE, sex = TRUE, simplify = FALSE, USE.NAMES = TRUE)
+
+# Tidy the results
+res_inter_cat <- purrr::map_df(model_tab_inter_cat, ~as.data.frame(.x), .id = "exposure")
+
+# Merge the results and save for sensitivity analysis
+res_inter <- dplyr::bind_rows(res_inter_cont, res_inter_cat)
+saveRDS(res_inter, here::here(path_main, "res_inter.RDS"))
+```
+
+
+## **Tables**
+
+
+### TABLE 1
+
+Characteristics of the mother-child pairs included in SEPAGES couple-child cohort study (France, 2014-2017, n = 479).
+
+```{r make table 1}
+Table_1 <- utils::read.csv(here::here(path_main, "population_characteristics.csv")) %>% 
+  as.data.frame()
+
+colnames(Table_1) <- c("Characteristic", "Distribution", "N")
+
+utils::write.csv(Table_1, here::here(path_main, "tables/Table_1.csv"), row.names = FALSE)
+Table_1
+```
+
+
+### TABLE 2
+
+Average maternal urinary phenol concentrations assessed in weekly pools collected in trimesters 2 and 3 of pregnancy, without or with standardization on sampling conditions (n = 479 pregnant women).
+
+```{r make table 2}
+Table_2 <- exp_desc
+
+utils::write.csv(Table_2, here::here(path_main, "tables/Table_2.csv"), row.names = FALSE)
+Table_2
+```
+
+## **Figures**
+
+
+### FIGURE 1
+
+Adjusted associations between pregnancy phenol concentrations and growth outcomes in utero (at US2 and US3) and at birth.
+
+```{r draw Figure 1, warning = FALSE}
+PlotModel(model_cont = model_output_cont, 
+          model_cat = model_output_cat,
+          plot_title = "",
+          ncol = length(exposures_long))
+
+ggplot2::ggsave(here::here(path_main, "figures/Figure_1.tiff"),
+                scale = 1/90,
+                height = 600,
+                width = 1300)
+```
+
+
+### FIGURE 2
+
+Adjusted associations between pregnancy phenol concentrations and growth outcomes in utero (at trimester 2 and 3) and at birth in a sex-stratified analysis
+
+```{r draw Figure 2, warning = FALSE}
+model_cont <- model_output_inter_cont %>% 
+  
+    # Pick only those exposures for which interactions were detected
+  dplyr::filter(stringr::str_detect(exp, "BPA|BP3|ETPA"))
+
+model_cat <- model_output_inter_cat %>% 
+  
+  # Pick only those exposures for which interactions were detected
+  dplyr::filter(stringr::str_detect(exp, "BUPA"))
+
+PlotModel(model_cont = model_cont,
+          model_cat = model_cat,
+          plot_title = "",
+          sex = TRUE,
+          ncol = length(exposures_long))
+
+
+ggplot2::ggsave(here::here(path_main, "figures/Figure_2.tiff"),
+                scale = 1/90,
+                height = 600,
+                width = 1300,
+                dpi = 150)
+```
+
+

@@ -1,0 +1,9 @@
+.Rproj.user
+#.Rhistory
+.RData
+.Ruserdata
+#*.html
+#lib.bib
+#svm-latex-ms2.tex
+results/phthalates
+data

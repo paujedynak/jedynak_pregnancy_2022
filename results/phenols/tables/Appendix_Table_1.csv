@@ -1,0 +1,12 @@
+"outcome","trimester","GA","mean_sd_out","n"
+"abdominal_circumference","US2",21.71,"174.18 (11.62)",433
+"biparietal_diameter","US2",21.71,"52.71 (3.41)",435
+"femur_length","US2",21.71,"37.34 (2.6)",435
+"head_circumference","US2",21.71,"191.56 (10.96)",433
+"abdominal_circumference","US3",32.43,"285.68 (15.64)",436
+"biparietal_diameter","US3",32.43,"82.3 (3.75)",437
+"femur_length","US3",32.43,"62.3 (2.55)",437
+"head_circumference","US3",32.43,"293.85 (11.24)",434
+"birth_length","birth",40,"501.08 (22.82)",470
+"birth_weight","birth",40,"3.29 (0.45)",475
+"head_circumference","birth",40,"345.09 (14.53)",466

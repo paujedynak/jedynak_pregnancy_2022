@@ -1,0 +1,618 @@
+---
+title: "Pregnancy exposure to phenols and anthropometric measures in gestation and at birth"
+subtitle: "Supplementary analyses"
+author: "Paulina Jedynak, Matthieu Rolland, Isabelle Pin, Cathrine Thomsen, Amrit K. Sakhi, Azemira Sabaredzovic, Claire Philippat, Rémy Slama, and the SEPAGES study group"
+date: "2022"
+output:
+  html_document:
+    df_print: paged
+biblio-style: apsr
+fontfamily: mathpazo
+fontsize: 11pt
+geometry: margin = 1in
+keywords: Cohort; phenol exposure; bisphenol; triclosan; pooled biospecimens; gestational growth; birth outcomes
+bibliography: lib.bib
+abstract: "Background: Some synthetic phenols alter pathways involved in fetal development. Despite their high within-subject temporal variability, earlier studies relied on spot urine samples to assess pregnancy exposure. In this study, we examined associations between prenatal phenol exposure and fetal growth. Methods: We measured concentrations of two bisphenols, four parabens, benzophenone-3, and triclosan in 478 pregnant women in two weekly pools of 21 samples each, collected at 18 and 34 gestational weeks. We used adjusted linear regressions to study associations between phenol concentrations and growth outcomes assessed twice during pregnancy and at birth. Results: Benzophenone-3 was positively associated with all ultrasound growth parameters in at least one time point, in males but not females. In females, butylparaben was negatively associated with third trimester abdominal circumference and weight at birth. We observed isolated associations for triclosan (negative) and for methylparaben and bisphenol S (positive) and late pregnancy fetal growth. Conclusions: Our results suggest associations between prenatal exposure to phenols and fetal growth. Benzophenone-3 was the exposure most consistently (positively) associated across all growth parameters."
+---
+
+
+## **General setup**
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r path setup}
+# Create a path to save output files
+path_main <- "results/phenols" # main analyses of the paper
+path_suppl <- "results/phenols/supplementary" # supplementary analyses not included in the paper
+```
+
+
+## **Load packages**
+
+```{r, message = FALSE}
+# Load packages
+source("R/StatModels.R")
+source("R/RegrCalibration.R")
+source("R/Figures.R")
+```
+
+```{r, message = FALSE}
+library("tidyverse")
+```
+
+
+## **Load datasets**
+
+```{r, message = FALSE}
+# Load datasets that will be used for analyses in the supplementary material and those that were not included in the paper
+# 
+# Results for main statistical models
+res_combined <- readRDS(here::here(path_main, "res_combined.RDS"))
+
+# Results for sex-stratified analysis
+res_inter <- readRDS(here::here(path_main, "res_inter.RDS"))
+
+# Preprocessed data for sensitivity analysis: correction of the measurement error
+model_data <- readRDS(here::here(path_main, "model_data.RDS"))
+
+# Preprocessed data for continuous exposures for sensitivity analysis: associations with non-standardized exposures
+model_data_long_cont <- readRDS(here::here(path_main, "model_data_long_cont.RDS"))
+
+# Results of the linear regressions to be used in sensitivity analysis: reversed dates of exposure and anthropomethric measures assessment
+model_data_long_main_cont <- readRDS(here::here(path_main, "model_data_long_main_cont.RDS"))
+model_data_long_main_cat <- readRDS(here::here(path_main, "model_data_long_main_cat.RDS"))
+
+# Dates of urine collection and ultrasound assessment
+clean_urine_dates <- readRDS(here::here("data/clean_urine_dates.RDS"))
+clean_ultrasound_dates <- readRDS(here::here("data/clean_ultrasound_dates.RDS"))
+```
+
+
+## **Prepare variable lists**
+
+Manually created lists of compounds, models variables, etc.
+
+```{r}
+# Manually create the variables names
+
+# Full names of exposure variables
+exposures_long <- c("Bisphenol A", "Bisphenol S", "Triclosan", "Benzophenone-3", "Butylparaben", "Ethylparaben", "Methylparaben", "Propylparaben")
+
+# Full names of continuous exposure variables
+exposures_long_nocat <- c("Bisphenol A", "Triclosan", "Benzophenone-3", "Ethylparaben", "Methylparaben", "Propylparaben")
+
+# Full names of categorical exposure variables
+exposures_long_cat <- c("Bisphenol S", "Butylparaben")
+
+# Full names of non-standardized exposures
+exposures_nosd <- c("Bisphenol A", "Benzophenone-3", "Ethylparaben", "Methylparaben", "Propylparaben")
+
+# Correction of the measurement error
+# Short names of exposure variables as used in the databases
+expo_names_nocat <- c("log_BPA", "log_TCS", "log_BP3", "log_ETPA", "log_MEPA", "log_PRPA")
+
+# Short names of outcome variables as used in the databases
+outcomes_US2_US3 <- c("head_circumference", "abdominal_circumference", "biparietal_diameter",  "femur_length")
+outcomes_birth <- c("birth_weight", "birth_length", "head_circumference")
+
+# Short names of confounder variables as used in the databases
+# All confounders
+confounders <- c("gestational_age", "mom_weight", "mom_height", "mom_age", "mom_edu", "parity", "child_sex", "smoke_high")
+
+# Numerical confounders
+confounders_num <- c("gestational_age", "mom_weight", "mom_height", "mom_age", "I(gestational_age^2)")
+
+# Categorical confounders
+confounders_cat <- c("mom_edu_Middle", "mom_edu_High", "parity_Second", "parity_Third_and_more", "smoke_high_Yes", "child_sex_Male")
+```
+
+
+## **Sensitivity analyses**
+
+### Associations with non-standardized exposures
+
+```{r}
+# Remove standardized exposures from the dataset
+model_data_long_nosd <- model_data_long_cont %>%
+  filter(str_detect(exp, "nosd"), 
+         !str_detect(exp, "t3"),
+         !(str_detect(exp, "both") & trimester == "US2"),
+         !(str_detect(exp, "t2") & (trimester == "US3" | trimester == "birth")))
+```
+
+```{r}
+# Run sensitivity linear regression on continuous exposure variables
+model_output_nosd <- ComputeGrowthModels(model_data_long_nosd)
+
+model_tab_nosd <- sapply(X = exposures_nosd, FUN = PrintTab, model_output = model_output_nosd, simplify = FALSE, USE.NAMES = TRUE)
+
+# Tidy the results
+res_nosd <- purrr::map_df(model_tab_nosd, ~as.data.frame(.x), .id = "exposure")
+```
+
+
+### Exposure measurment error correction
+
+Nab et al. 2021 [@nab2021]
+The standard method for covariate measurement error correction that uses the calibration model matrix is *standard regression calibration* (RC). Standard RC can be applied in all four types of studies from the previous section (including measurement error correction using replicates). Standard RC does not make the most efficient use of the information available in calibration studies [@carroll2006a]. Also in replicates studies, standard RC does not make the most efficient use of the information available. The standard RC method is sub-optimal in terms of efficiency, since the method depends on the ordering of the replicate measurements [@frost2000]. This can be intuitively understood as follows. The standard RC regresses the mean of all but the first replicate on the first replicate, but this could as easily be exchanged with the second replicate. Therefore, different approaches are possible and proposed in mecor (e.g., maximum likelihood) [@frost2000]. [@bartlett2009] showed how a standard random-intercepts model can be used to obtain maximum likelihood (ML) estimates that are more efficient than standard RC, at the cost of some additional parametric assumptions, discussed in section 3.3.
+
+3.3. Maximum likelihood estimation for replicates studies
+
+One of the assumption is that Xi (phenol concentration) is normally distributed given Zi (covariates). X are not normally distributed (although we ln the phenol conc) but X~Z still can be. To check that, I could plot residuals of each equation of linear regression for X~Z and see if they are normally distributed? If yes, I could use ML method. But here the assumption of linear association between X and Z has to be met.
+
+
+The CIs can be either estimated with or without bootstrapping. 
+
+```{r}
+# Prepare the data to be processed by the mecor package
+# Remove exposure variables that will not be needed
+model_data_calibration <- model_data %>% 
+  dplyr::select(ident:trimester, mom_weight:smoke_high, dplyr::contains("log")) %>% 
+  dplyr::select(!dplyr::contains("nosd")) %>% 
+  dplyr::select(!dplyr::contains("both")) %>%   
+  
+  # Standardise outcome values
+  dplyr::group_by(outcome, trimester) %>%
+  dplyr::mutate(outcome_val_sd = outcome_val / sd(outcome_val, na.rm = TRUE)) %>%
+  
+  # Keeping GA as days not weeks causes an error from mecor: "There has been a warning from the lme4 package while fitting the linear mixed model to obtain maximum likelihood esitmates: Some predictor variables are on very different scales: consider rescaling" that is triggered by I(gestational_age^2) variable in the RC formula
+  mutate(gestational_age = gestational_age / 7)
+
+# Transform data to wide format (to be processed by the mecor package)
+# Second trimester
+US2_data <- model_data_calibration %>% 
+  dplyr::filter(trimester == "US2") %>% 
+  tidyr::pivot_wider(id_cols = -outcome_val,
+                     names_from = c(outcome, trimester),
+                     values_from = c(outcome_val_sd)) %>% 
+  
+  # Rename t2 and t3 exposure variables so t2 is the 'primary sample' and t3 is a 'replicate'
+  # NOTE: In theory, for the MLE method, the order of the replicates does not matter. This means that the naming is only symbolic and log_BPA and log_BPA_rep have the same importance 
+  # However, the order of the naming matters for the uncorrected estimates obtained with mecor, if we want to compare them to the estimates obtained by linear regression (as in LM t2 will predict US2 and t3 will predict US3 and birth outcomes)
+  dplyr::rename_at(dplyr::vars(log_BPA_t2:log_PRPA_t2), function(x) stringr::str_replace(x, "_t2", "")) %>% 
+  dplyr::rename_at(dplyr::vars(log_BPA_t3:log_PRPA_t3), function(x) stringr::str_replace(x, "_t3", "_rep")) %>% 
+  purrr::set_names(~stringr::str_replace_all(., "_US2", ""))
+
+# Third trimester
+US3_data <- model_data_calibration %>% 
+  dplyr::filter(trimester == "US3") %>% 
+  tidyr::pivot_wider(id_cols = -outcome_val,
+                     names_from = c(outcome, trimester),
+                     values_from = c(outcome_val_sd)) %>% 
+  
+  # Rename t3 and t2 exposure variables so t3 is the 'primary sample' and t2 is a 'replicate'
+  dplyr::rename_at(dplyr::vars(log_BPA_t3:log_PRPA_t3), function(x) stringr::str_replace(x, "_t3", "")) %>% 
+  dplyr::rename_at(dplyr::vars(log_BPA_t2:log_PRPA_t2), function(x) stringr::str_replace(x, "_t2", "_rep")) %>% 
+  purrr::set_names(~stringr::str_replace_all(., "_US3", ""))
+
+# Birth
+birth_data <- model_data_calibration %>% 
+  dplyr::filter(trimester == "birth") %>%
+  tidyr::pivot_wider(id_cols = -outcome_val,
+                     names_from = c(outcome, trimester),
+                     values_from = c(outcome_val_sd)) %>% 
+  
+  # Rename t3 and t2 exposure variables so t3 is the 'primary sample' and t2 is a 'replicate'
+  dplyr::rename_at(vars(log_BPA_t3:log_PRPA_t3), function(x) stringr::str_replace(x, "_t3", "")) %>% 
+  dplyr::rename_at(vars(log_BPA_t2:log_PRPA_t2), function(x) stringr::str_replace(x, "_t2", "_rep")) %>% 
+  purrr::set_names(~stringr::str_replace_all(., "_birth", ""))
+```
+
+
+```{r, cache = TRUE}
+# # Set a seed
+seed <- 632739
+# 
+# # Regression calibration uses information from both t2 and t3 exposure (and the chronological order of exposure sampling does not matter, so both t2 and t3 can be replicates). This means that N for US2 will be higher than for the uncorrected models that take into account only information from t2 (in contrast to US3 and birth that use information from the averaged T2 and T3, so N will be equal with regression calibration). Therefore, for US2 the IDs for uncorrected models will be unified based on N for any exposure per outcome (as there is no difference in N between phenols, it is only different in regard to the outcome)
+# 
+# Second trimester
+# regr_calibration_US2 <- RegrCalibration(outcomes = outcomes_US2_US3,
+#                                         exposures = expo_names_nocat,
+#                                         data = US2_data,
+#                                         confounders = confounders,
+#                                         confounders_dummy = paste(c(confounders_num, confounders_cat)),
+#                                         method = "mle",
+#                                         seed = seed,
+#                                         B = 1,
+#                                         US2 = TRUE) %>%
+#   # This 'US2' argument will allow to correct the inflated N
+#   # (see above for explanation)
+# 
+#   dplyr::mutate(trimester = "US2")
+# 
+# # Third trimester
+# regr_calibration_US3 <- RegrCalibration(outcomes = outcomes_US2_US3,
+#                                         exposures = expo_names_nocat,
+#                                         data = US3_data,
+#                                         confounders = confounders,
+#                                         confounders_dummy = paste(c(confounders_num, confounders_cat)),
+#                                         method = "mle",
+#                                         seed = seed,
+#                                         B = 100) %>%
+#   mutate(trimester = "US3")
+# 
+# # Birth
+# regr_calibration_birth <- RegrCalibration(outcomes = outcomes_birth,
+#                                           exposures = expo_names_nocat,
+#                                           data = birth_data,
+#                                           confounders = confounders,
+#                                           confounders_dummy = paste(c(confounders_num, confounders_cat)),
+#                                           method = "mle",
+#                                           seed = seed,
+#                                           B = 100) %>%
+#   dplyr::mutate(trimester = "birth")
+# 
+# regr_calibr_result <- rbind(regr_calibration_US2, regr_calibration_US3, regr_calibration_birth)
+
+# saveRDS(regr_calibr_result, here::here(path_main, "regr_calibr_MLE_100BS.RDS"))
+```
+
+
+```{r}
+regr_calibr_result <- readRDS(here::here(path_main, "regr_calibr_MLE_100BS.RDS"))
+
+regr_calibr_result_corr <- regr_calibr_result %>%
+  dplyr::mutate_at(dplyr::vars(exp, outcome, calibration, trimester), as.character) %>% 
+  dplyr::arrange(trimester, exp) %>% 
+  
+  # Add term variable so the output can be processed by PrintTab
+  dplyr::mutate(term = "exp_val") %>% 
+  
+  # Select corrected results only
+  dplyr::filter(calibration == "corr")
+
+model_tab_reg_cal_corr <- sapply(X = exposures_long_nocat, FUN = PrintTab, model_output = regr_calibr_result_corr, simplify = FALSE, USE.NAMES = TRUE)
+
+res_reg_cal_corr <- purrr::map_df(model_tab_reg_cal_corr, ~as.data.frame(.x), .id = "exposure")
+
+# The uncorrected results for regression calibration must be the same for T2 -> US2 scenario from the main model. For US3 and birth it differs as for the main model averaged T2 and T3 exposure is used and for RC it is T3 only
+```
+
+
+
+### Remove participants for whom the urine samples were collected after the ultrasound measurement
+
+```{r}
+compare_dates <- inner_join(clean_urine_dates, clean_ultrasound_dates, by = "ident") %>% 
+  dplyr::mutate(diff_T2 = US2_date - urine_date_T2,
+                diff_T3 = US3_date - urine_date_T3)
+
+compare_dates <- compare_dates[rowSums(is.na(compare_dates[, 6:7])) != 2, ]
+
+ident_US2_rev_dates <- compare_dates %>% 
+  dplyr::filter(diff_T2 < 0) %>% 
+  dplyr::pull(ident)
+
+ident_US3_rev_dates <- compare_dates %>% 
+  dplyr::filter(diff_T3 < 0) %>% 
+  dplyr::pull(ident)
+```
+
+```{r}
+model_data_long_exam_dates_cont <- model_data_long_main_cont %>%
+  
+  # Restrict data to T2 only & remove individuals with reversed exam dates
+  dplyr::filter((trimester == "US2" & !ident %in% ident_US2_rev_dates) | ((trimester == "US3" | trimester == "birth") & !ident %in% ident_US3_rev_dates))
+
+model_data_long_exam_dates_cat <- model_data_long_main_cat %>%
+  
+  # Restrict data to T2 only & remove individuals with reversed exam dates
+  dplyr::filter((trimester == "US2" & !ident %in% ident_US2_rev_dates) | ((trimester == "US3" | trimester == "birth") & !ident %in% ident_US3_rev_dates))
+```
+
+```{r}
+# Continuous exposures
+model_output_exam_dates_cont <- ComputeGrowthModels(model_data_long = model_data_long_exam_dates_cont)
+
+model_tab_exam_dates_cont <- sapply(X = exposures_long_nocat, FUN = PrintTab, model_output = model_output_exam_dates_cont, simplify = FALSE, USE.NAMES = TRUE)
+
+res_exam_dates_cont <- purrr::map_df(model_tab_exam_dates_cont, ~as.data.frame(.x), .id = "exposure")
+```
+
+```{r}
+# Categorical exposures
+model_output_exam_dates_cat <- ComputeGrowthModels(model_data_long = model_data_long_exam_dates_cat, cat = TRUE)
+
+model_tab_exam_dates_cat <- sapply(X = exposures_long_cat, FUN = PrintTab, model_output = model_output_exam_dates_cat, cat = TRUE, simplify = FALSE, USE.NAMES = TRUE)
+
+res_exam_dates_cat <- purrr::map_df(model_tab_exam_dates_cat, ~as.data.frame(.x), .id = "exposure")
+```
+
+
+
+
+## **Appendix Tables**
+
+
+### APPENDIX TABLE 1
+
+Distributions of the growth outcomes measured during pregnancy and at birth.
+
+```{r}
+# Combine cont and cat datasets ---- 39,464 x 18
+model_data_long_main <- model_data_long_main_cat %>% 
+  dplyr::mutate(exp_val = as.numeric(exp_val)) %>% 
+  dplyr::bind_rows(model_data_long_main_cont)
+```
+
+```{r}
+# Display sample size per outcome
+Appendix_Table_1 <- model_data_long_main %>%
+  dplyr::mutate(outcome_val = dplyr::case_when(outcome == "birth_length" ~ outcome_val * 10, 
+                                               TRUE ~ outcome_val)) %>% 
+  dplyr::group_by(exp, trimester, outcome) %>%
+  dplyr::select(-period_rank) %>% 
+  na.omit() %>% 
+  dplyr::summarise(n = length(outcome_val),
+                   mean_out = round(mean(outcome_val), 2),
+                   sd_out = round(sd(outcome_val), 2),
+                   GA = round(median(gestational_age / 7), 2)
+  ) %>% 
+  dplyr::mutate(mean_sd_out = stringr::str_c(mean_out," (", sd_out, ")"),
+                trimester = factor(trimester, levels = c("US2", "US3", "birth"))) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::select(outcome, trimester, GA, mean_sd_out, n) %>% 
+  dplyr::arrange(trimester, outcome) %>% 
+  dplyr::group_by(trimester) %>% 
+  dplyr::distinct(outcome, .keep_all = TRUE)
+
+Appendix_Table_1
+
+utils::write.csv(Appendix_Table_1, here::here(path_main, "tables/Appendix_Table_1.csv"), row.names = FALSE)
+```
+
+
+### APPENDIX TABLE 2 
+
+Adjusted associations between pregnancy phenol concentrations and growth outcomes in utero (at US2 and US3) and at birth.
+
+```{r}
+# Combine results into one table
+res <- res_combined %>%
+  dplyr::mutate(exposure = factor(exposure, levels = exposures_long)) %>%
+  dplyr::arrange(exposure, tri_out, term) %>% 
+  dplyr::mutate(
+    p_value_head_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_head_circumference,
+      TRUE ~ p_value_head_circumference),
+    p_value_abdominal_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_abdominal_circumference,
+      TRUE ~ p_value_abdominal_circumference),
+    p_value_biparietal_diameter = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_biparietal_diameter,
+      TRUE ~ p_value_biparietal_diameter),
+    p_value_femur_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_femur_length,
+      TRUE ~ p_value_femur_length),
+    p_value_birth_weight = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_weight,
+      TRUE ~ p_value_birth_weight),
+    p_value_birth_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_length,
+      TRUE ~ p_value_birth_length)) %>% 
+  dplyr::select(-contains(c("int_sign", "contrast", "main_eff")))
+dplyr::select(res, exposure, tri_out, dplyr::contains("p_value")) %>% 
+  dplyr::filter(tri_out == "US2") %>% 
+  tidyr::pivot_longer(cols = -c(exposure, tri_out),
+                      names_to = "p_val",
+                      values_to = "p_val_val") %>% 
+  dplyr::arrange(p_val_val) # Th lowest p-value for US2 was 0.3
+```
+
+```{r make Appendix table 2}
+Appendix_Table_2 <- res
+utils::write.csv(Appendix_Table_2, here::here(path_main, "tables/Appendix_Table_2.csv"), row.names = FALSE)
+
+Appendix_Table_2
+```
+
+
+### APPENDIX TABLE 3
+
+Adjusted associations between pregnancy phenol concentrations and growth outcomes in utero (at T2 and T3) and at birth in a sex-stratified analysis.
+
+```{r prepare results to make Appendix Table 3}
+# Combine results into one table
+Appendix_Table_3 <- res_inter %>% 
+  dplyr::mutate(exposure = factor(exposure, levels = exposures_long)) %>% 
+  dplyr::mutate(term = factor(term, 
+                              levels = c("exp_val", "exp_valLOD-LOQ", "exp_val>LOQ"),
+                              labels = c("continuous", "LOD-LOQ", ">LOQ"))) %>% 
+  dplyr::arrange(exposure, tri_out, term, child_sex) %>% 
+  dplyr::mutate(
+    p_value_head_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_head_circumference,
+      TRUE ~ p_value_head_circumference),
+    p_value_abdominal_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_abdominal_circumference,
+      TRUE ~ p_value_abdominal_circumference),
+    p_value_biparietal_diameter = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_biparietal_diameter,
+      TRUE ~ p_value_biparietal_diameter),
+    p_value_femur_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_femur_length,
+      TRUE ~ p_value_femur_length),
+    p_value_birth_weight = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_weight,
+      TRUE ~ p_value_birth_weight),
+    p_value_birth_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_length,
+      TRUE ~ p_value_birth_length)) %>% 
+  dplyr::select(-contains(c("contrast", "main_eff")))
+```
+
+```{r make Appendix Table 3}
+Appendix_Table_3 <- Appendix_Table_3
+
+utils::write.csv(Appendix_Table_3, here::here(path_main, "tables/Appendix_Table_3.csv"), row.names = FALSE)
+
+Appendix_Table_3
+```
+
+
+### APPENDIX TABLE 4
+
+Intraclass correlation coefficients (ICC) reported in previous studies assessing the variability of phenols in spot urine samples of pregnant women, restricted to compounds assessed in the present study.
+
+Table made externally.
+
+
+### APPENDIX TABLE 5
+
+Sensitivity analysis. Sensitivity analysis. Adjusted regression with maximum likelihood-based method applied to correct effect estimates.
+
+```{r make Appendix Table 5}
+Appendix_Table_5 <- res_reg_cal_corr %>% 
+  dplyr::select(-term, -dplyr::contains("int_sign"), -dplyr::contains("p_value"))
+
+utils::write.csv(Appendix_Table_5, here::here(path_main, "tables/Appendix_Table_5.csv"), row.names = FALSE)
+
+Appendix_Table_5
+```
+
+
+### APPENDIX TABLE 6
+
+Sensitivity analysis. Adjusted associations between non-standardized pregnancy phenol concentrations and growth outcomes in utero (US2 and US3) and at birth. 
+
+```{r make Appendix Table 6}
+Appendix_Table_6 <- res_nosd %>%
+  dplyr::mutate(exposure = factor(exposure, levels = exposures_nosd)) %>%
+  dplyr::select(-term, -dplyr::contains("int_sign")) %>% 
+  dplyr::arrange(exposure, tri_out)
+
+utils::write.csv(Appendix_Table_5, here::here(path_main, "tables/Appendix_Table_6.csv"), row.names = FALSE)
+
+Appendix_Table_6
+```
+
+
+### APPENDIX TABLE 7
+
+Sensitivity analysis. Adjusted associations between pregnancy phenol concentrations and growth outcomes in utero (T2 and T3) and at birth after removal of individuals with inverse assessment of phenols and ultrasound data.
+
+```{r prepare results to make Appendix Table 7}
+# Combine results into one table
+res_exam_dates <- dplyr::bind_rows(res_exam_dates_cont, res_exam_dates_cat) %>%
+  dplyr::mutate(exposure = factor(exposure, levels = exposures_long)) %>%
+  dplyr::arrange(exposure, tri_out, term) %>% 
+  dplyr::mutate(
+    
+    # For categorical exposures, replace p value calculated for each level by the main effect p value (anova)
+    p_value_head_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_head_circumference,
+      TRUE ~ p_value_head_circumference),
+    p_value_abdominal_circumference = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_abdominal_circumference,
+      TRUE ~ p_value_abdominal_circumference),
+    p_value_biparietal_diameter = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_biparietal_diameter,
+      TRUE ~ p_value_biparietal_diameter),
+    p_value_femur_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_femur_length,
+      TRUE ~ p_value_femur_length),
+    p_value_birth_weight = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_weight,
+      TRUE ~ p_value_birth_weight),
+    p_value_birth_length = dplyr::case_when(
+      stringr::str_detect(exposure, "Bisphenol S|Butyl") ~ p_value_main_eff_birth_length,
+      TRUE ~ p_value_birth_length)) %>% 
+  dplyr::select(-contains(c("int_sign", "contrast", "main_eff")))
+```
+
+```{r make Appendix Table 7}
+Appendix_Table_7 <- res_exam_dates
+
+utils::write.csv(Appendix_Table_7, here::here(path_main, "tables/Appendix_Table_7.csv"), row.names = FALSE)
+
+Appendix_Table_7
+```
+
+
+## **Appendix Figures**
+
+### APPENDIX FIGURE 1
+
+Study flow chart.
+Figure made externally.
+
+
+
+# References
+
+
+
+
+
+## **Additional analyses that were not used in the paper**
+
+```{r}
+# Load data
+# Information on the anthropometric measures
+bdd_grossesse <- haven::read_stata(here::here("data/raw_data/bdd_grossesse_v4_1.dta")) # replaced the old database bdd_grossesse_v4.dta with a new version provided by Karine Supernant
+
+# US dataset with missing values
+us_data_for_missing <- readr::read_csv(here::here("data/us_data_for_missing_calculations.csv"))
+
+# Head circumference a few days after birth (not at birth)
+head_cir <- haven::read_sas(here::here("data/raw_data/questcy1caf_20210907.sas7bdat"))
+
+pop_smoke_expo <- readRDS(here::here(path_main,"pop_smoke_expo.RDS"))
+pop_smoke_expo_miss <- readRDS(here::here(path_main, "pop_smoke_expo_miss.RDS"))
+```
+
+
+### Missing ultrasound measurements (for Sarah Lyon-Caen)
+
+```{r}
+# Display missing values for T2 and T3
+ultrasound_data_miss <- us_data_for_missing %>%
+  dplyr::select(ident:trimester) %>% 
+  dplyr::filter(trimester != "T1")
+
+miss_no <- apply(ultrasound_data_miss, 1, function(x) sum(is.na(x)))
+
+ultrasound_data_miss <- cbind(ultrasound_data_miss, miss_no)
+```
+
+
+### Mark outliers in head circumference variable
+
+```{r}
+cov_data <- dplyr::select(bdd_grossesse, ident, po_hc) %>% 
+  dplyr::left_join(dplyr::select(head_cir, ident, cy1caf1_q09), by = "ident") %>% 
+  dplyr::rename(head_circumference = po_hc,
+                head_cir_later = cy1caf1_q09)
+```
+
+
+```{r}
+# outlier by error
+cov_data[which.min(cov_data$head_cir_later), ] # it is not possible that head cir dropped after birth to 80 mm (3 times)
+```
+
+
+### Compare head circumference variables (at birth and a few days after birth)
+
+```{r}
+summary(cov_data$head_circumference)
+summary(cov_data$head_cir_later) # 242 NAs, 1 error
+cov_data$head_cir_later[cov_data$head_cir_later == 80] <- NA
+
+spearman_cor <- stats::cor(cov_data$head_circumference, cov_data$head_cir_later, use = "complete.obs", method = "spearman")
+```
+
+```{r}
+ggplot2::ggplot(stats::na.omit(cov_data), ggplot2::aes(head_circumference, head_cir_later)) + 
+  ggplot2::geom_jitter(shape = 21, size = 3, fill = "lightblue", color = "darkred") +
+  ggplot2::theme_bw() +
+  ggplot2::ggtitle(paste0("Spearman rho = ", round(spearman_cor, 2), ", n = 189")) +
+  ggplot2::xlab("HC at birth") +
+  ggplot2::ylab("HC after birth")
+```
+
+There is a high correlation between HC measured at birth and after birth (rho = 0.88).
+
+

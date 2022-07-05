@@ -1,0 +1,24 @@
+"Characteristic","Distribution","N"
+"","     N=478      ",NA
+"Maternal weight before pregnancy (kg)","59.0 [54.0;66.0]",478
+"Maternal height, cm"," 165 [161;169]  ",474
+"Maternal age at conception, years","32.1 [29.9;35.2]",478
+"mom_edu:","                ",478
+"    Low","   82 (17.2%)   ",NA
+"    Middle","  125 (26.2%)   ",NA
+"    High","  268 (56.1%)   ",NA
+"    'Missing'","   3 (0.63%)    ",NA
+"parity:","                ",478
+"    First","  219 (45.8%)   ",NA
+"    Second","  211 (44.1%)   ",NA
+"    Third_and_more","   48 (10.0%)   ",NA
+"child_sex:","                ",478
+"    Female","  220 (46.0%)   ",NA
+"    Male","  256 (53.6%)   ",NA
+"    'Missing'","   2 (0.42%)    ",NA
+"gestational_duration","   278 (10.8)   ",476
+"gestational_duration_weeks","40.0 [39.0;40.7]",476
+"smoke_high:","                ",478
+"    No","  427 (89.3%)   ",NA
+"    Yes","   11 (2.30%)   ",NA
+"    'Missing'","   40 (8.37%)   ",NA

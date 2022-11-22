@@ -4,9 +4,7 @@ title: "Pregnancy exposure to phenols and anthropometric measures in gestation a
 
 ## Article info
 
-[Link to article](**https://pubmed.ncbi.nlm.nih.gov/35700189**)
-
-Repository contains reproducible analyses for the paper: [Jedynak et al., 2022](**10.1097/EDE.0000000000001515**).
+Repository contains reproducible analyses for the paper: [Jedynak et al., 2022](https://pubmed.ncbi.nlm.nih.gov/35700189).
 
 ## Analysis overview
 

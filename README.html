@@ -11,7 +11,7 @@
 
 
 
-<title>Pregnancy exposure to phenols and anthropometric measures in gestation and at birth</title>
+<title>Pregnancy Exposure to Phenols and Anthropometric Measures in Gestation and at Birth</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,38 +348,36 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Pregnancy exposure to phenols and
-anthropometric measures in gestation and at birth</h1>
+<h1 class="title toc-ignore">Pregnancy Exposure to Phenols and
+Anthropometric Measures in Gestation and at Birth</h1>
 
 </div>
 
 
 <div id="article-info" class="section level2">
 <h2>Article info</h2>
-<p>Repository contains reproducible analyses for the paper: <a href="https://pubmed.ncbi.nlm.nih.gov/35700189">Jedynak et al.,
+<p>Repository contains reproducible analyses for the paper: <a href="https://pubmed.ncbi.nlm.nih.gov/35700189/">Jedynak et al.,
 2022</a>.</p>
 </div>
 <div id="analysis-overview" class="section level2">
 <h2>Analysis overview</h2>
-<p>Analyses depend on R (&gt;= 3.5.0).</p>
+<p>Analyses depend on R (&gt;= 4.2.0).</p>
 <p>Code used to produce the files is found in the corresponding files:
-<code>jedynak_pregnancy_2022_Epidemiology.Rmd</code> and
-<code>jedynak_pregnancy_2022_supplement_Epidemiology.Rmd</code>
-(executable files).</p>
+<code>phthalates_growth.Rmd</code> and
+<code>phthalates_growth_suppl.Rmd</code> (executable files).</p>
 <p>The corresponding knitted files are:
-<code>jedynak_pregnancy_2022_Epidemiology.html</code> and
-<code>jedynak_pregnancy_2022_supplement_Epidemiology.html</code>
-(read-only files).</p>
+<code>phthalates_growth.html</code> and
+<code>phthalates_growth.html</code> (read-only files).</p>
 <p>This analysis was performed under Windows 10 x64 (build 19041)
 using:<br />
-* <a href="https://cran.r-project.org/bin/windows/base">R 4.1.2</a>
-(2021-11-01)<br />
+* <a href="https://cran.r-project.org/bin/windows/base">R 4.2.2</a>
+(2022-11-01)<br />
 * <a href="https://cran.r-project.org/web/packages/renv/index.html">renv
 0.15.0</a> dependency management package</p>
 <div id="packages" class="section level3">
 <h3>Packages</h3>
 <p>All packages used in the analyses are saved in the
-<code>renv/library/R-4.1/x86_64-w64-mingw32</code> folder at the version
+<code>renv/library/R-4.2/x86_64-w64-mingw32</code> folder at the version
 used to produce these results, under control of the <code>renv</code>
 package manager. Re-running the analysis requires execution of
 <code>renv::restore()</code> which will upgrade/ downgrade user’s
@@ -393,10 +391,9 @@ affect user’s package library.</p>
 <code>data/raw_data</code> folder that is not shared here. These data
 can only be provided upon request and after approval by the SEPAGES
 consortium (contact: <a href="sarah.lyon-caen@univ-grenoble-alpes.fr">Sarah Lyon-Caen</a>).
-Running two scripts:
-<code>jedynak_pregnancy_2022_Epidemiology.Rmd</code> and
-<code>jedynak_pregnancy_2022_supplement_Epidemiology.Rmd</code> will
-allow to fully reproduce the analysis.</p>
+Running two scripts: <code>phthalates_growth.Rmd</code> and
+<code>phthalates_growth_suppl.Rmd</code> will allow to fully reproduce
+the analysis.</p>
 </div>
 </div>
 <div id="repo-organization" class="section level2">
@@ -419,10 +416,10 @@ containing manual ultrasound data, n = 38</li>
 information on LOD and LOQ values for each phenol</li>
 </ul>
 </div>
-<div id="resultsphenols-folder" class="section level3">
-<h3>results/phenols folder</h3>
+<div id="results-folder" class="section level3">
+<h3>results/ folder</h3>
 <p>It contains figures and tables subfolders as well as results obtained
-in the main analyses:</p>
+in the main analyses</p>
 </div>
 <div id="r-folder" class="section level3">
 <h3>R/ folder</h3>
@@ -432,76 +429,83 @@ analyses.</p>
 </div>
 <div id="session-info" class="section level2">
 <h2>Session info</h2>
-<pre><code>R version 4.1.2 (2021-11-01)
+<pre><code>R version 4.2.2 (2021-11-01)
 Platform: x86_64-w64-mingw32/x64 (64-bit)
-Running under: Windows 10 x64 (build 19044)
+Running under: Windows 10 x64 (build 19045)
 
 Matrix products: default
 
 locale:
-[1] LC_COLLATE=English_Europe.65001 
-[2] LC_CTYPE=C                      
-[3] LC_MONETARY=English_Europe.65001
-[4] LC_NUMERIC=C                    
-[5] LC_TIME=English_Europe.65001    
-system code page: 65001
+[1] LC_COLLATE=English_Europe.utf8 
+[2] LC_CTYPE=English_Europe.utf8   
+[3] LC_MONETARY=English_Europe.utf8
+[4] LC_NUMERIC=C                   
+[5] LC_TIME=English_Europe.utf8    
 
 attached base packages:
-[1] stats     graphics  grDevices datasets  utils     methods  
-[7] base     
+[1] stats     graphics  grDevices datasets 
+[5] utils     methods   base     
 
 other attached packages:
-[1] forcats_0.5.1   stringr_1.4.0   dplyr_1.0.7    
-[4] purrr_0.3.4     readr_2.1.1     tidyr_1.1.4    
-[7] tibble_3.1.6    ggplot2_3.3.5   tidyverse_1.3.1
+ [1] Hmisc_4.7-2     Formula_1.2-4  
+ [3] survival_3.4-0  lattice_0.20-45
+ [5] ggpubr_0.5.0    magrittr_2.0.3 
+ [7] forcats_0.5.2   stringr_1.5.0  
+ [9] dplyr_1.1.0     purrr_0.3.5    
+[11] readr_2.1.3     tidyr_1.1.0    
+[13] tibble_3.1.8    ggplot2_3.4.0  
+[15] tidyverse_1.2.0
 
 loaded via a namespace (and not attached):
- [1] fs_1.5.2            lubridate_1.8.0    
- [3] bit64_4.0.5         webshot_0.5.2      
- [5] httr_1.4.2          rprojroot_2.0.2    
- [7] tools_4.1.2         backports_1.4.1    
- [9] utf8_1.2.2          R6_2.5.1           
-[11] DBI_1.1.2           colorspace_2.0-2   
-[13] nnet_7.3-16         withr_2.4.3        
-[15] tidyselect_1.1.1    bit_4.0.4          
-[17] compiler_4.1.2      chron_2.3-56       
-[19] textshaping_0.3.6   cli_3.1.0          
-[21] rvest_1.0.2         HardyWeinberg_1.7.4
-[23] flextable_0.6.10    mice_3.14.0        
-[25] xml2_1.3.3          officer_0.4.1      
-[27] labeling_0.4.2      scales_1.1.1       
-[29] systemfonts_1.0.3   digest_0.6.29      
-[31] rmarkdown_2.11      svglite_2.0.0      
-[33] base64enc_0.1-3     pkgconfig_2.0.3    
-[35] htmltools_0.5.2     sessioninfo_1.2.2  
-[37] dbplyr_2.1.1        fastmap_1.1.0      
-[39] rlang_0.4.12        readxl_1.3.1       
-[41] rstudioapi_0.13     farver_2.1.0       
-[43] generics_0.1.1      jsonlite_1.7.2     
-[45] vroom_1.5.7         car_3.0-12         
-[47] zip_2.2.0           magrittr_2.0.1     
-[49] kableExtra_1.3.4    Matrix_1.4-0       
-[51] Rcpp_1.0.7          munsell_0.5.0      
-[53] fansi_1.0.0         abind_1.4-5        
-[55] gdtools_0.2.3       lifecycle_1.0.1    
-[57] stringi_1.7.6       yaml_2.2.1         
-[59] carData_3.0-5       grid_4.1.2         
-[61] parallel_4.1.2      crayon_1.4.2       
-[63] lattice_0.20-45     haven_2.4.3        
-[65] splines_4.1.2       hms_1.1.1          
-[67] knitr_1.37          pillar_1.6.4       
-[69] uuid_1.0-3          compareGroups_4.5.1
-[71] reprex_2.0.1        glue_1.6.0         
-[73] evaluate_0.14       data.table_1.14.2  
-[75] renv_0.15.0         modelr_0.1.8       
-[77] vctrs_0.3.8         tzdb_0.2.0         
-[79] cellranger_1.1.0    gtable_0.3.0       
-[81] assertthat_0.2.1    xfun_0.29          
-[83] broom_0.7.11        Rsolnp_1.16        
-[85] ragg_1.2.1          survival_3.2-13    
-[87] viridisLite_0.4.0   truncnorm_1.0-8    
-[89] writexl_1.4.0       ellipsis_0.3.2     
-[91] here_1.0.1        </code></pre>
+ [1] colorspace_2.0-3    ggsignif_0.6.4     
+ [3] deldir_1.0-6        ellipsis_0.3.2     
+ [5] rprojroot_2.0.3     flextable_0.8.3    
+ [7] htmlTable_2.4.1     base64enc_0.1-3    
+ [9] rstudioapi_0.14     mice_3.15.0        
+[11] farver_2.1.0        bit64_4.0.5        
+[13] fansi_1.0.3         lubridate_1.9.0    
+[15] xml2_1.3.3          splines_4.2.3      
+[17] knitr_1.41          jsonlite_1.8.4     
+[19] broom_0.8.0         cluster_2.1.4      
+[21] png_0.1-8           compiler_4.2.3     
+[23] httr_1.4.4          backports_1.4.1    
+[25] Matrix_1.5-3        fastmap_1.1.0      
+[27] cli_3.4.1           htmltools_0.5.3    
+[29] tools_4.2.3         gtable_0.3.1       
+[31] glue_1.6.2          Rcpp_1.0.8.3       
+[33] carData_3.0-5       cellranger_1.1.0   
+[35] vctrs_0.5.2         writexl_1.4.1      
+[37] svglite_2.1.0       xfun_0.35          
+[39] rvest_1.0.3         timechange_0.1.1   
+[41] lifecycle_1.0.3     renv_0.15.0        
+[43] rstatix_0.7.1       scales_1.2.1       
+[45] vroom_1.6.0         ragg_1.2.5         
+[47] hms_1.1.2           parallel_4.2.3     
+[49] RColorBrewer_1.1-3  HardyWeinberg_1.7.5
+[51] yaml_2.3.6          gridExtra_2.3      
+[53] gdtools_0.2.4       rpart_4.1.19       
+[55] latticeExtra_0.6-30 stringi_1.7.6      
+[57] checkmate_2.1.0     zip_2.2.2          
+[59] truncnorm_1.0-8     chron_2.3-58       
+[61] rlang_1.0.6         pkgconfig_2.0.3    
+[63] systemfonts_1.0.4   Rsolnp_1.16        
+[65] evaluate_0.18       labeling_0.4.2     
+[67] compareGroups_4.6.0 htmlwidgets_1.5.4  
+[69] bit_4.0.5           tidyselect_1.2.0   
+[71] here_1.0.1          R6_2.5.1           
+[73] generics_0.1.2      pillar_1.8.1       
+[75] haven_2.5.1         foreign_0.8-84     
+[77] withr_2.5.0         abind_1.4-5        
+[79] nnet_7.3-18         modelr_0.1.8       
+[81] crayon_1.5.2        car_3.0-12         
+[83] uuid_1.1-0          interp_1.1-3       
+[85] utf8_1.2.2          tzdb_0.3.0         
+[87] rmarkdown_2.18      officer_0.4.4      
+[89] jpeg_0.1-10         grid_4.2.3         
+[91] readxl_1.4.1        data.table_1.14.6  
+[93] digest_0.6.30       webshot_0.5.4      
+[95] textshaping_0.3.6   munsell_0.5.0      
+[97] viridisLite_0.4.1   kableExtra_1.3.4 </code></pre>
 </div>
 
 

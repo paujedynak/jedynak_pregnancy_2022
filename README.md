@@ -1,6 +1,4 @@
----
-title: "Pregnancy Exposure to Phenols and Anthropometric Measures in Gestation and at Birth"
----
+# Pregnancy Exposure to Phenols and Anthropometric Measures in Gestation and at Birth
 
 ## Article info
 
@@ -10,10 +8,10 @@ Repository contains reproducible analyses for the paper: [Jedynak et al., 2022](
 
 Analyses depend on R (>= 4.2.0).
 
-Code used to produce the files is found in the corresponding files: `phthalates_growth.Rmd` and `phthalates_growth_suppl.Rmd` (executable files).
+Code used to produce the files is found in the corresponding files: `jedynak_pregnancy_2022_Epidemiology.Rmd` and `jedynak_pregnancy_2022_supplement_Epidemiology.Rmd` (executable files).
 
-The corresponding knitted files are: `phthalates_growth.html` and 
-`phthalates_growth.html` (read-only files).
+The corresponding knitted files are: `phenols_growth.html` and 
+`phenols_growth.html` (read-only files).
 
 This analysis was performed under Windows 10 x64 (build 19041) using:    
 * [R 4.2.2](https://cran.r-project.org/bin/windows/base) (2022-11-01)    
@@ -27,7 +25,7 @@ All packages used in the analyses are saved in the `renv/library/R-4.2/x86_64-w6
 
 ### To run
 
-Re-running the analysis requires an additional `data/raw_data` folder that is not shared here. These data can only be provided upon request and after approval by the SEPAGES consortium (contact: [Sarah Lyon-Caen](sarah.lyon-caen@univ-grenoble-alpes.fr)). Running two scripts: `phthalates_growth.Rmd` and `phthalates_growth_suppl.Rmd` will allow to fully reproduce the analysis.
+Re-running the analysis requires an additional `data/raw_data` folder that is not shared here. These data can only be provided upon request and after approval by the SEPAGES consortium (contact: [Sarah Lyon-Caen](sarah.lyon-caen@univ-grenoble-alpes.fr)). Running two scripts: `jedynak_pregnancy_2022_Epidemiology.Rmd` and `jedynak_pregnancy_2022_supplement_Epidemiology.Rmd` will allow to fully reproduce the analysis.
 
 
 ## Repo organization
